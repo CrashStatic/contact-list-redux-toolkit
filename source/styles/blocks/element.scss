@@ -1,0 +1,64 @@
+.element {
+  display: flex;
+  flex-direction: column;
+  width: 250px;
+  background-color: #efbae2;
+  border: 1px solid #8c8181;
+  border-bottom: none;
+  cursor: pointer;
+
+  &:hover,
+  &:focus-visible {
+    background-color: #eca0d9;
+  }
+
+  &:focus {
+    outline: none;
+  }
+}
+
+.element--active {
+  background-color: #e5aff5;
+
+  &:focus-visible {
+    background-color: #eca0d9;
+  }
+
+  &:focus {
+    outline: none;
+    background-color: #eca0d9;
+  }
+}
+
+.element__container {
+  display: flex;
+  flex-direction: row;
+  justify-content: space-between;
+  padding: 10px;
+}
+
+.element__letter {
+  font-weight: 800;
+}
+
+.element__counter {
+  display: none;
+  font-weight: 800;
+
+  &--active {
+    display: block;
+  }
+}
+
+.element__contacts {
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+  max-height: 0;
+  visibility: hidden;
+}
+
+.element__contacts--open {
+  overflow: visible;
+  visibility: visible;
+}

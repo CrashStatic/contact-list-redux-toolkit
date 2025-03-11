@@ -1,0 +1,21 @@
+{
+  "compilerOptions": {
+    "target": "ES6",
+    "module": "commonjs",
+    "strict": true,
+    "esModuleInterop": true,
+    "skipLibCheck": true,
+    "forceConsistentCasingInFileNames": true,
+    "allowImportingTsExtensions": true,
+    "noEmit": true,
+    "outDir": "./build/scripts"
+  },
+  "include": [
+    "source/scripts/**/*.ts"
+  ],
+  "exclude": [
+    "node_modules",
+    "gulpfile.js",
+    "svgo.config.js"
+  ]
+}

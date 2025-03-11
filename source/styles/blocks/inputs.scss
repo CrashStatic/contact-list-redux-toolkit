@@ -1,0 +1,21 @@
+.inputs {
+  display: flex;
+  flex-direction: row;
+  gap: 20px;
+
+  &--popup {
+    flex-direction: column;
+    gap: 10px;
+  }
+}
+
+.inputs__wrapper {
+  width: 250px;
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.inputs__label {
+  font-size: 14px;
+}
