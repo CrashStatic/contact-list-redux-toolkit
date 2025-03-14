@@ -3,8 +3,7 @@ import { createColumn } from './modules/column';
 import { ALPHABET_A_M, ALPHABET_N_Z } from './modules/alphabet';
 import { phoneInput } from './modules/form-buttons';
 import { initPhoneInput } from './modules/phone-mask';
-import { getContacts } from './modules/contact-manager';
-import { COLUMN_ELEMENT_SELECTOR,
+import {
   CONTACT_DELETE_BTN,
   CONTACT_EDIT_BTN,
   FORM_BTN_SAVE,
@@ -15,11 +14,15 @@ import { COLUMN_ELEMENT_SELECTOR,
   MODAL_CLOSE_BTN,
   MODAL_OVERLAY,
   MODAL_SHOW_BTN } from './modules/constants';
-import { addContact, deleteContact } from './modules/contact';
+import {
+  deleteContact as deleteContactAction
+} from './store/slices/contact-slice.ts';
 import { showAllContacts } from './modules/search';
 import { openEditPopup, saveEditPopup } from './modules/edit-form';
 import { closeModal, modal } from './modules/modal';
 import { ContactInfo } from './types/contact';
+import {store} from './store/store.ts';
+import {renderColumn} from './modules/contact.ts';
 
 document.addEventListener('DOMContentLoaded', () => {
   const containerLeft = document.querySelector('.column-left') as HTMLElement;
@@ -28,17 +31,22 @@ document.addEventListener('DOMContentLoaded', () => {
   createColumn(ALPHABET_A_M, containerLeft);
   createColumn(ALPHABET_N_Z, containerRight);
 
-  // Используем getContacts, чтобы получить актуальные данные
-  const contacts: ContactInfo[] = getContacts();
+  // Используем Redux store для получения контактов
+  const contacts = store.getState().contacts.contacts;
 
-  contacts.forEach(({ name, position, phone }) => {
-    const firstLetter = name[0].toUpperCase();
-    const letterElement = document.querySelector(`[data-id="${firstLetter.toLowerCase()}"]`)?.closest(COLUMN_ELEMENT_SELECTOR) as HTMLElement;
-
-    if (letterElement) {
-      const contact = {name, position, phone};
-      addContact({ contact, letterElement, shouldSave: false});
+  // Группируем контакты по первой букве имени
+  const contactsByLetter: Record<string, ContactInfo[]> = {};
+  contacts.forEach((contact) => {
+    const firstLetter = contact.name[0].toUpperCase();
+    if (!contactsByLetter[firstLetter]) {
+      contactsByLetter[firstLetter] = [];
     }
+    contactsByLetter[firstLetter].push(contact);
+  });
+
+  // Рендерим контакты для каждой буквы
+  Object.keys(contactsByLetter).forEach((letter) => {
+    renderColumn(letter, contactsByLetter[letter]);
   });
 
   initPhoneInput(phoneInput);
@@ -56,7 +64,11 @@ document.addEventListener('DOMContentLoaded', () => {
     }
 
     if (target.closest(CONTACT_DELETE_BTN)) {
-      deleteContact(e);
+      const contactElement = target.closest(MESSAGE_SELECTOR) as HTMLElement;
+      const name = contactElement.querySelector(MESSAGE_NAME_SELECTOR)?.textContent ?? '';
+
+      // Удаляем контакт через Redux action creator
+      store.dispatch(deleteContactAction(name));
       return;
     }
 

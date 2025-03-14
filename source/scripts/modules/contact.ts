@@ -6,17 +6,22 @@ import { COLUMN_ELEMENT_SELECTOR,
   CONTACTS_OPEN_SELECTOR,
   CONTACTS_SELECTOR,
   COUNTER_SELECTOR,
-  ELEMENT_MESSAGE_SELECTOR,
   ELEMENT_SELECTOR,
   MESSAGE_NAME_SELECTOR,
   MESSAGE_PHONE_SELECTOR,
   MESSAGE_POSITION_SELECTOR,
   MESSAGE_SELECTOR,
   MESSAGE_TEMPLATE_SELECTOR } from './constants';
-import { addContactToStorage, deleteContactToStorage, getContacts } from './contact-manager';
 import { openEditPopup } from './edit-form';
 import { ContactInfo } from '../types/contact';
 import {AddContactParams} from '../types/add-contact';
+import {store} from '../store/store.ts';
+import {
+  addContact as addContactAction,
+  deleteContact as deleteContactAction,
+  editContact
+} from '../store/slices/contact-slice.ts';
+import {selectContacts} from '../store/selectors.ts';
 
 const counters: { [key: string]: Counter} = {}; // Хранилище для счетчиков
 
@@ -75,19 +80,17 @@ function renderColumn(letter: string, contacts: ContactInfo[]): void {
   }
 }
 
-function addContact({ contact, letterElement, shouldSave = true }: AddContactParams): void {
-  // Если необходимо, добавляем контакт в хранилище
-  if (shouldSave) {
-    addContactToStorage(contact);
-  }
+function addContact({ contact }: AddContactParams): void {
+  store.dispatch(addContactAction(contact));
 
-  const letter = letterElement.querySelector('[data-id]')?.textContent?.toUpperCase() ?? '';
-
-  // Обновляем колонку, фильтруем контакты по первой букве имени
-  const updatedContacts = getContacts().filter((item) => item.name[0].toUpperCase() === letter);
+  const letter = contact.name[0].toUpperCase();
+  const state = store.getState();
+  const allContacts = selectContacts(state);
+  const updatedContacts = allContacts.filter(
+    (item) => item.name[0].toUpperCase() === letter
+  );
   renderColumn(letter, updatedContacts);
 }
-
 
 function deleteContact(event: Event): void {
   const target = event.target as Element;
@@ -98,46 +101,36 @@ function deleteContact(event: Event): void {
   }
 
   const name = contactMessage.querySelector(MESSAGE_NAME_SELECTOR)?.textContent ?? '';
-  const position = contactMessage.querySelector(MESSAGE_POSITION_SELECTOR)?.textContent ?? '';
-  const phone = contactMessage.querySelector(MESSAGE_PHONE_SELECTOR)?.textContent ?? '';
 
-  deleteContactToStorage({name, position, phone});
-
+  store.dispatch(deleteContactAction(name));
   contactMessage.remove();
 
-  // Рендерим колонку заново
   const firstLetter = name[0].toUpperCase();
-  const updatedContacts = getContacts().filter((contact) => contact.name[0].toUpperCase() === firstLetter);
+  const state = store.getState();
+  const allContacts = selectContacts(state);
+  const updatedContacts = allContacts.filter(
+    (contact) => contact.name[0].toUpperCase() === firstLetter
+  );
   renderColumn(firstLetter, updatedContacts);
 }
 
 function updateContact(oldContact: ContactInfo, newContact: ContactInfo): void {
-  const firstLetter = oldContact.name[0].toUpperCase();
-  const letterElement = document.querySelector(`[data-id="${firstLetter.toLowerCase()}"]`)?.closest(COLUMN_ELEMENT_SELECTOR);
+  store.dispatch(
+    editContact({
+      oldName: oldContact.name,
+      newContact,
+    })
+  );
 
-  if (letterElement) {
-    const contactsContainer = letterElement.querySelector(CONTACTS_SELECTOR) as HTMLElement;
-    const contactElements = contactsContainer.querySelectorAll(ELEMENT_MESSAGE_SELECTOR);
-
-    contactElements.forEach((contact: Element) => {
-      const contactName = contact.querySelector(MESSAGE_NAME_SELECTOR)?.textContent ?? '';
-      const contactPosition = contact.querySelector(MESSAGE_POSITION_SELECTOR)?.textContent ?? '';
-      const contactPhone = contact.querySelector(MESSAGE_PHONE_SELECTOR)?.textContent ?? '';
-
-      if (contactName === oldContact.name && contactPosition === oldContact.position && contactPhone === oldContact.phone) {
-        const nameElement = contact.querySelector(MESSAGE_NAME_SELECTOR);
-        const positionElelemnt = contact.querySelector(MESSAGE_POSITION_SELECTOR);
-        const messageElement = contact.querySelector(MESSAGE_PHONE_SELECTOR);
-
-        if (nameElement && positionElelemnt && messageElement) {
-          nameElement.textContent = newContact.name;
-          positionElelemnt.textContent = newContact.position;
-          messageElement.textContent = newContact.phone;
-        }
-      }
-    });
-  }
+  const firstLetter = newContact.name[0].toUpperCase();
+  const state = store.getState();
+  const allContacts = selectContacts(state);
+  const updatedContacts = allContacts.filter(
+    (contact) => contact.name[0].toUpperCase() === firstLetter
+  );
+  renderColumn(firstLetter, updatedContacts);
 }
+
 
 function openContactInfo(event: Event): void {
   const target = event.target as Element;
@@ -218,4 +211,52 @@ document.querySelector(CONTACT_TABLE)?.addEventListener('keydown', (event: Event
   }
 });
 
-export { renderContactElement, addContact, deleteContact, renderContacts, updateContact };
+// // Подписываемся на изменения состояния Redux
+// store.subscribe(() => {
+//   const state = store.getState();
+//   const contactsByLetter: Record<string, ContactInfo[]> = {};
+//
+//   const allContacts = selectContacts(state);
+//   allContacts.forEach((contact) => {
+//     const firstLetter = contact.name[0].toUpperCase();
+//     if (!contactsByLetter[firstLetter]) {
+//       contactsByLetter[firstLetter] = [];
+//     }
+//     contactsByLetter[firstLetter].push(contact);
+//   });
+//
+//   Object.keys(contactsByLetter).forEach((letter) => {
+//     renderColumn(letter, contactsByLetter[letter]);
+//   });
+// });
+
+// Функция для рендера всех контактов
+function renderAllContacts() {
+  const state = store.getState();
+  const contacts = selectContacts(state);
+
+  // Группируем контакты по первой букве имени
+  const contactsByLetter: Record<string, ContactInfo[]> = {};
+  contacts.forEach((contact) => {
+    const firstLetter = contact.name[0].toUpperCase();
+    if (!contactsByLetter[firstLetter]) {
+      contactsByLetter[firstLetter] = [];
+    }
+    contactsByLetter[firstLetter].push(contact);
+  });
+
+  // Рендерим контакты для каждой буквы
+  Object.keys(contactsByLetter).forEach((letter) => {
+    renderColumn(letter, contactsByLetter[letter]);
+  });
+}
+
+// Подписываемся на изменения store
+store.subscribe(() => {
+  renderAllContacts();
+});
+
+// Инициализация контактов при старте приложения
+renderAllContacts();
+
+export { renderContactElement, addContact, deleteContact, renderContacts, updateContact, renderColumn };

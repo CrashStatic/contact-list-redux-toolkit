@@ -11,7 +11,6 @@ export const CONTACTS_SELECTOR = '.element__contacts';
 export const CONTACTS_OPEN_SELECTOR = 'element__contacts--open';
 export const COUNTER_SELECTOR = '.element__counter';
 export const COUNTER_ACTIVE_SELECTOR = 'element__counter--active';
-export const ELEMENT_MESSAGE_SELECTOR = '.element__message';
 
 export const COLUMN_ELEMENT_SELECTOR = '.column__element';
 

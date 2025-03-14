@@ -11,11 +11,11 @@ import { COLUMN_ELEMENT_SELECTOR,
   FORM_PHONE_ID,
   FORM_POSITION_ID,
   FORM_SELECTOR } from './constants.js';
-import { addContact } from './contact.js';
-import { clearAllContactsInStorage, getContacts } from './contact-manager.js';
 import { openSearchModal } from './search.js';
 import {ContactInfo} from '../types/contact';
 import {Validate} from '../types/validate';
+import {addContact as addContactAction, clearAllContacts as clearAllContactsAction} from '../store/slices/contact-slice.ts';
+import {store} from '../store/store.ts';
 
 const nameInput = document.getElementById(FORM_NAME_ID) as HTMLInputElement;
 const positionInput = document.getElementById(FORM_POSITION_ID) as HTMLInputElement;
@@ -30,8 +30,8 @@ function addContactToList(): void {
   const inputs = [nameInput, positionInput, phoneInput];
 
   // Валидация
-  const storage: ContactInfo[] = getContacts();
-  const { isValid, errors }: Validate = validateForm({inputs, storage, errorMessage});
+  const storage: ContactInfo[] = store.getState().contacts.contacts; // Получаем контакты из Redux store
+  const { isValid, errors }: Validate = validateForm({ inputs, storage, errorMessage });
 
   if (!isValid) {
     // Если есть ошибки, отображаем их
@@ -45,11 +45,9 @@ function addContactToList(): void {
     return;
   }
 
-  const firstLetter = name[0].toUpperCase(); // Извлекаем первую букву имени
-  const letterElement = document.querySelector(`[data-id="${firstLetter.toLowerCase()}"]`)?.closest(COLUMN_ELEMENT_SELECTOR) as HTMLElement;
-
   const contact = {name, position, phone};
-  addContact({ contact, letterElement});
+
+  store.dispatch(addContactAction(contact));
 
   nameInput.value = '';
   positionInput.value = '';
@@ -67,7 +65,8 @@ function clearAllContacts(): void {
     counter.reset();
   });
 
-  clearAllContactsInStorage();
+  // Очищаем контакты в Redux store
+  store.dispatch(clearAllContactsAction());
 }
 
 const form = document.querySelector(FORM_SELECTOR) as HTMLElement;

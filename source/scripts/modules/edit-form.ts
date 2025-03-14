@@ -7,12 +7,13 @@ import { CONTACT_EDIT_BTN,
   EDIT_POPUP_POSITION,
   MESSAGE_SELECTOR,
   MODAL_TITLE } from './constants';
-import { updateContact } from './contact';
-import { getContacts, updateContactInStorage } from './contact-manager';
 import { closeModal, modal, onDocumentKeydown, openModal } from './modal';
 import { initPhoneInput } from './phone-mask';
 import { showError, validateForm } from './validat';
 import {Validate} from '../types/validate';
+import {store} from '../store/store.ts';
+import {selectContacts} from '../store/selectors.ts';
+import {editContact} from '../store/slices/contact-slice.ts';
 
 const editPopupTemplate = document.querySelector(EDIT_POPUP) as HTMLTemplateElement | null;
 let popupNameInput: HTMLInputElement | null;
@@ -75,7 +76,8 @@ function saveEditPopup() {
   }
 
   // Валидация
-  const storage: ContactInfo[] = getContacts();
+  const state = store.getState();
+  const storage: ContactInfo[] = selectContacts(state);
   const { isValid, errors }: Validate = validateForm({inputs, storage, errorMessage});
 
   if (!isValid) {
@@ -93,9 +95,8 @@ function saveEditPopup() {
   const oldContact = { name: oldName, position: oldPosition, phone: oldPhone };
   const newContact = { name: newName, position: newPosition, phone: newPhone };
 
-  updateContactInStorage(oldContact, newContact);
-
-  updateContact(oldContact, newContact);
+  // Обновляем контакт через Redux action
+  store.dispatch(editContact({ oldName: oldContact.name, newContact }));
 
   closeModal();
 

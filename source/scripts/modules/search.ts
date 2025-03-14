@@ -1,10 +1,23 @@
 import { ContactInfo } from '../types/contact';
 import { MODAL_INPUT, MODAL_SEARCH_AREA, MODAL_SHOW_BTN, MODAL_TEMPLATE_SELECTOR } from './constants';
 import { renderContactElement } from './contact';
-import { getContacts, searchContacts } from './contact-manager';
-import { modal, openModal } from './modal';
+import { modal, openModal} from './modal';
+import {store} from '../store/store.ts';
+import {selectContacts} from '../store/selectors.ts';
 
 const searchModalTemplate = document.querySelector(MODAL_TEMPLATE_SELECTOR) as HTMLTemplateElement;
+
+function searchContacts(query: string): ContactInfo[] {
+  const state = store.getState();
+  const contacts: ContactInfo[] = selectContacts(state);
+
+  return contacts.filter(
+    ({ name, position, phone }) =>
+      name.toLowerCase().includes(query) ||
+      position.toLowerCase().includes(query) ||
+      phone.includes(query)
+  );
+}
 
 function displaySearchResults(results: ContactInfo[], area: HTMLElement) {
   area.innerHTML = '';
@@ -48,12 +61,35 @@ function openSearchModal() {
 }
 
 function showAllContacts() {
-  const allContacts = getContacts(); // Получаем все контакты из localStorage
+  const state = store.getState();
+  const storage: ContactInfo[] = selectContacts(state);
   const searchArea = modal.querySelector(MODAL_SEARCH_AREA) as HTMLElement;
-  displaySearchResults(allContacts, searchArea);
+  displaySearchResults(storage, searchArea);
 
   const input = modal.querySelector('input') as HTMLInputElement;
   input.focus();
 }
+
+const currentQuery = ''; // Текущий запрос для поиска
+
+function updateSearchResults() {
+  const state = store.getState();
+  const contacts: ContactInfo[] = selectContacts(state);
+  const searchArea = modal.querySelector(MODAL_SEARCH_AREA) as HTMLElement;
+
+  if (!searchArea) {
+    return;
+  }
+
+  if (currentQuery) {
+    const results = searchContacts(currentQuery);
+    displaySearchResults(results, searchArea);
+  } else {
+    displaySearchResults(contacts, searchArea);
+  }
+}
+
+// Подписываемся на изменения store
+store.subscribe(updateSearchResults);
 
 export { openSearchModal, showAllContacts };
