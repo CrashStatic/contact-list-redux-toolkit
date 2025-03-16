@@ -115,6 +115,8 @@ function updateContact(oldContact: ContactInfo, newContact: ContactInfo): void {
       newContact,
     })
   );
+
+  renderAllContacts();
 }
 
 function openContactInfo(event: Event): void {
@@ -203,7 +205,9 @@ function renderAllContacts() {
   // Очищаем ВСЕ колонки
   document.querySelectorAll(COLUMN_ELEMENT_SELECTOR).forEach((column) => {
     const contactsContainer = column.querySelector(CONTACTS_SELECTOR) as HTMLElement;
-    contactsContainer.innerHTML = '';
+    if (contactsContainer.innerHTML !== '') {
+      contactsContainer.innerHTML = '';
+    }
   });
 
   // Группируем и рендерим контакты

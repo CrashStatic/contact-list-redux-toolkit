@@ -37,11 +37,10 @@ const contactSlice = createSlice({
       );
     },
     editContact: (state, action:PayloadAction<{ oldName: string, newContact: ContactInfo}>) => {
-      const index = state.contacts.findIndex(
-        (contact) => contact.name === action.payload.oldName
-      );
+      const { oldName, newContact } = action.payload;
+      const index = state.contacts.findIndex((contact) => contact.name === oldName);
       if (index !== -1) {
-        state.contacts[index] = action.payload.newContact;
+        state.contacts[index] = newContact;
       }
     },
     clearAllContacts: (state) => {
