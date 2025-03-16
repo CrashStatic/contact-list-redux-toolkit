@@ -7,6 +7,8 @@ import {selectContacts} from '../store/selectors.ts';
 
 const searchModalTemplate = document.querySelector(MODAL_TEMPLATE_SELECTOR) as HTMLTemplateElement;
 
+let currentQuery = ''; // Текущий запрос для поиска
+
 function searchContacts(query: string): ContactInfo[] {
   const state = store.getState();
   const contacts: ContactInfo[] = selectContacts(state);
@@ -38,9 +40,9 @@ function displaySearchResults(results: ContactInfo[], area: HTMLElement) {
 
 function listenSearchInput(element: HTMLInputElement, area: HTMLElement) {
   element.addEventListener('input', () => {
-    const query = element.value.trim().toLowerCase();
-    if (query) {
-      const results = searchContacts(query);
+    currentQuery = element.value.trim().toLowerCase(); // Обновляем текущий запрос
+    if (currentQuery) {
+      const results = searchContacts(currentQuery);
       displaySearchResults(results, area);
     } else {
       area.innerHTML = '';
@@ -69,8 +71,6 @@ function showAllContacts() {
   const input = modal.querySelector('input') as HTMLInputElement;
   input.focus();
 }
-
-const currentQuery = ''; // Текущий запрос для поиска
 
 function updateSearchResults() {
   const state = store.getState();

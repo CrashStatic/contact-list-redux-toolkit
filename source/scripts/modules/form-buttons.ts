@@ -14,8 +14,9 @@ import { COLUMN_ELEMENT_SELECTOR,
 import { openSearchModal } from './search.js';
 import {ContactInfo} from '../types/contact';
 import {Validate} from '../types/validate';
-import {addContact as addContactAction, clearAllContacts as clearAllContactsAction} from '../store/slices/contact-slice.ts';
+import {clearAllContacts as clearAllContactsAction} from '../store/slices/contact-slice.ts';
 import {store} from '../store/store.ts';
+import {addContact} from './contact.ts';
 
 const nameInput = document.getElementById(FORM_NAME_ID) as HTMLInputElement;
 const positionInput = document.getElementById(FORM_POSITION_ID) as HTMLInputElement;
@@ -47,7 +48,7 @@ function addContactToList(): void {
 
   const contact = {name, position, phone};
 
-  store.dispatch(addContactAction(contact));
+  addContact({contact});
 
   nameInput.value = '';
   positionInput.value = '';

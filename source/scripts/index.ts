@@ -13,16 +13,13 @@ import {
   MESSAGE_SELECTOR,
   MODAL_CLOSE_BTN,
   MODAL_OVERLAY,
-  MODAL_SHOW_BTN } from './modules/constants';
-import {
-  deleteContact as deleteContactAction
-} from './store/slices/contact-slice.ts';
+  MODAL_SHOW_BTN
+} from './modules/constants';
 import { showAllContacts } from './modules/search';
 import { openEditPopup, saveEditPopup } from './modules/edit-form';
 import { closeModal, modal } from './modules/modal';
 import { ContactInfo } from './types/contact';
-import {store} from './store/store.ts';
-import {renderColumn} from './modules/contact.ts';
+import {deleteContact, renderAllContacts} from './modules/contact.ts';
 
 document.addEventListener('DOMContentLoaded', () => {
   const containerLeft = document.querySelector('.column-left') as HTMLElement;
@@ -31,23 +28,8 @@ document.addEventListener('DOMContentLoaded', () => {
   createColumn(ALPHABET_A_M, containerLeft);
   createColumn(ALPHABET_N_Z, containerRight);
 
-  // Используем Redux store для получения контактов
-  const contacts = store.getState().contacts.contacts;
-
-  // Группируем контакты по первой букве имени
-  const contactsByLetter: Record<string, ContactInfo[]> = {};
-  contacts.forEach((contact) => {
-    const firstLetter = contact.name[0].toUpperCase();
-    if (!contactsByLetter[firstLetter]) {
-      contactsByLetter[firstLetter] = [];
-    }
-    contactsByLetter[firstLetter].push(contact);
-  });
-
-  // Рендерим контакты для каждой буквы
-  Object.keys(contactsByLetter).forEach((letter) => {
-    renderColumn(letter, contactsByLetter[letter]);
-  });
+  // Инициализация контактов при старте приложения
+  renderAllContacts();
 
   initPhoneInput(phoneInput);
 
@@ -64,11 +46,7 @@ document.addEventListener('DOMContentLoaded', () => {
     }
 
     if (target.closest(CONTACT_DELETE_BTN)) {
-      const contactElement = target.closest(MESSAGE_SELECTOR) as HTMLElement;
-      const name = contactElement.querySelector(MESSAGE_NAME_SELECTOR)?.textContent ?? '';
-
-      // Удаляем контакт через Redux action creator
-      store.dispatch(deleteContactAction(name));
+      deleteContact(e);
       return;
     }
 

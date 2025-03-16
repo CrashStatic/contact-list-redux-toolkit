@@ -13,7 +13,7 @@ import { showError, validateForm } from './validat';
 import {Validate} from '../types/validate';
 import {store} from '../store/store.ts';
 import {selectContacts} from '../store/selectors.ts';
-import {editContact} from '../store/slices/contact-slice.ts';
+import {updateContact} from './contact.ts';
 
 const editPopupTemplate = document.querySelector(EDIT_POPUP) as HTMLTemplateElement | null;
 let popupNameInput: HTMLInputElement | null;
@@ -96,7 +96,7 @@ function saveEditPopup() {
   const newContact = { name: newName, position: newPosition, phone: newPhone };
 
   // Обновляем контакт через Redux action
-  store.dispatch(editContact({ oldName: oldContact.name, newContact }));
+  updateContact(oldContact, newContact);
 
   closeModal();
 
